@@ -1,0 +1,5 @@
+module com.company {
+    requires jmh.core;
+    requires jdk.unsupported;
+    exports com.company;
+}
