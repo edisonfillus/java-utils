@@ -1,13 +1,14 @@
 package com.company;
 
+import java.text.NumberFormat;
 import java.util.*;
 import java.util.stream.Collectors;
 
 class Car {
 
-    private String name;
+    private final String name;
 
-    private List<Part> parts = new ArrayList<>();
+    private final List<Part> parts = new ArrayList<>();
 
     public Car(String name) {
         this.name = name;
@@ -48,6 +49,8 @@ public class StreamsReport {
 
     public static void main(String... args) {
 
+        NumberFormat currencyFormatter = NumberFormat.getCurrencyInstance(Locale.US);
+
         var car1 = new Car("x20");
         car1.addPart(new Part(100.0, 2));
         car1.addPart(new Part(25.0, 1));
@@ -63,14 +66,39 @@ public class StreamsReport {
                 .mapToDouble(p -> p.getQty() * p.getPrice())
                 .sum();
 
-        var totalByCar = cars.stream().collect(
-                Collectors.groupingBy(Car::getName,
-                        Collectors.mapping(c -> c.getParts().stream().mapToDouble(p-> p.getQty() * p.getPrice()).sum(),
-                                Collectors.toList())));
+        var totalByCar = cars.stream()
+                .collect(
+                        Collectors.groupingBy(
+                                Car::getName,
+                                Collectors.mapping(
+                                        c -> c.getParts().stream()
+                                                .mapToDouble(p -> p.getQty() * p.getPrice())
+                                                .sum(),
+                                        Collectors.toList()
+                                )
+                        )
+                );
+
+        var totalByCarFormatted = cars.stream()
+                .collect(
+                        Collectors.groupingBy(
+                                Car::getName,
+                                Collectors.collectingAndThen(
+                                        Collectors.summingDouble(
+                                                c -> c.getParts().stream()
+                                                        .mapToDouble(p -> p.getQty() * p.getPrice())
+                                                        .sum()
+                                        ),
+                                        currencyFormatter::format
+                                )
+                        )
+                );
 
         System.out.printf("Total USD %.2f \n", total);
 
-        totalByCar.forEach((entry,value)->System.out.printf("Car: %s Total: %.2f \n",entry,value.get(0)));
+        System.out.println(totalByCar);
+
+        totalByCarFormatted.forEach((car, value) -> System.out.printf("Car: %s Total: %s \n", car, value));
 
 
     }
